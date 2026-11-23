@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources\Partners;
+
+use App\Filament\Resources\Partners\Pages\CreatePartner;
+use App\Filament\Resources\Partners\Pages\EditPartner;
+use App\Filament\Resources\Partners\Pages\ListPartners;
+use App\Filament\Resources\Partners\Schemas\PartnerForm;
+use App\Filament\Resources\Partners\Tables\PartnersTable;
+use App\Models\Partner;
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
+use UnitEnum;
+
+// По образцу GalleryPhotoResource. Доступ решает App\Policies\PartnerPolicy.
+final class PartnerResource extends Resource
+{
+    protected static ?string $model = Partner::class;
+
+    protected static ?string $slug = 'partnery';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Контент';
+
+    protected static ?int $navigationSort = 40;
+
+    protected static ?string $navigationLabel = 'Партнёры';
+
+    protected static ?string $modelLabel = 'партнёр';
+
+    protected static ?string $pluralModelLabel = 'партнёры';
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function form(Schema $schema): Schema
+    {
+        return PartnerForm::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return PartnersTable::configure($table);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListPartners::route('/'),
+            'create' => CreatePartner::route('/create'),
+            'edit' => EditPartner::route('/{record}/edit'),
+        ];
+    }
+}

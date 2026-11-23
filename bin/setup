@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Первый запуск проекта одной командой (в WSL/Linux/macOS, нужен Docker).
+# Повторный запуск безопасен: ничего не затирает, только доводит до рабочего состояния.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+say() { printf '\n\033[1;34m==> %s\033[0m\n' "$1"; }
+fail() { printf '\n\033[1;31m[ошибка] %s\033[0m\n' "$1" >&2; exit 1; }
+
+command -v docker >/dev/null 2>&1 || fail "Docker не найден. См. docs/install-windows.md"
+docker info >/dev/null 2>&1 || fail "Docker не запущен. Откройте Docker Desktop и повторите."
+
+# Строка env-файла: заменить значение ключа или дописать ключ.
+set_env() {
+    local key="$1" value="$2"
+    if grep -q "^${key}=" .env; then
+        sed -i.bak "s|^${key}=.*|${key}=${value}|" .env && rm -f .env.bak
+    else
+        printf '%s=%s\n' "$key" "$value" >> .env
+    fi
+}
+
+say "Файл окружения .env"
+if [ ! -f .env ]; then
+    cp .env.example .env
+    echo "Создан .env из .env.example"
+fi
+if grep -q '^DB_PASSWORD=$' .env; then
+    # Случайный пароль локальной БД: живёт только в .env, в git не попадает.
+    set_env DB_PASSWORD "$(openssl rand -hex 16)"
+    echo "Сгенерирован пароль локальной БД"
+fi
+set_env WWWUSER "$(id -u)"
+set_env WWWGROUP "$(id -g)"
+
+say "Зависимости PHP (composer install в контейнере)"
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    -e COMPOSER_HOME=/tmp/composer \
+    -e CACHE_STORE=array \
+    -e SESSION_DRIVER=array \
+    laravelsail/php84-composer:latest \
+    composer install --no-interaction --ignore-platform-reqs
+
+SAIL=./vendor/bin/sail
+
+say "Запуск контейнеров"
+$SAIL up -d --build --wait
+
+say "Ключ приложения"
+if grep -q '^APP_KEY=$' .env; then
+    $SAIL artisan key:generate --no-interaction
+fi
+
+say "Миграции и демо-данные"
+$SAIL artisan migrate --no-interaction --force
+$SAIL artisan db:seed --no-interaction --force
+$SAIL artisan storage:link --no-interaction 2>/dev/null || true
+
+say "Фронтенд (npm install + сборка)"
+$SAIL npm install
+$SAIL npm run build
+
+say "Git-хук: гейты перед каждым коммитом"
+if [ -d .git ]; then
+    git config core.hooksPath .githooks
+    echo "Подключён .githooks/pre-commit"
+fi
+
+APP_PORT_VALUE="$(grep '^APP_PORT=' .env | cut -d= -f2)"
+URL="http://localhost"
+[ "${APP_PORT_VALUE:-80}" != "80" ] && URL="${URL}:${APP_PORT_VALUE}"
+
+say "Готово"
+cat <<EOF
+Сайт:     ${URL}
+Админка:  ${URL}/admin   (логин и пароль напечатаны выше, в шаге демо-данных)
+
+Каждый день:
+  ./vendor/bin/sail up -d        поднять
+  ./vendor/bin/sail stop         остановить
+  ./vendor/bin/sail composer check   гейты: формат → статанализ → тесты
+EOF

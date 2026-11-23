@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 420" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-label="Разрез помещения: щит, кабельный лоток, извещатель, камера, СКУД и розетка СКС"><rect width="560" height="420" fill="#16191f"/>
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#f6f5f2" fill-opacity=".08"/>
+    </pattern>
+  </defs>
+  <rect width="560" height="420" fill="url(#grid)" stroke="none"/>
+  <g stroke="#f6f5f2" stroke-opacity=".75" stroke-width="2">
+    
+    <path d="M20 44 H540"/>
+    <path d="M20 396 H540"/>
+    <path d="M20 44 L40 24 M60 44 L80 24 M100 44 L120 24 M140 44 L160 24 M180 44 L200 24 M220 44 L240 24 M260 44 L280 24 M300 44 L320 24 M340 44 L360 24 M380 44 L400 24 M420 44 L440 24 M460 44 L480 24 M500 44 L520 24" stroke-opacity=".25" stroke-width="1.5"/>
+    
+    <path d="M30 70 H530 M30 90 H530"/>
+    <path d="M50 70 V90 M90 70 V90 M130 70 V90 M170 70 V90 M210 70 V90 M250 70 V90 M290 70 V90 M330 70 V90 M370 70 V90 M410 70 V90 M450 70 V90 M490 70 V90" stroke-opacity=".35" stroke-width="1.5"/>
+    <path d="M90 44 V70 M470 44 V70" stroke-opacity=".5" stroke-width="1.5"/>
+    
+    <rect x="60" y="150" width="140" height="190" rx="6"/>
+    <path d="M72 178 H188 M72 238 H188 M72 298 H188" stroke-opacity=".4" stroke-width="1.5"/>
+    <g stroke-width="1.75">
+      <rect x="78" y="164" width="16" height="30" rx="2"/><rect x="98" y="164" width="16" height="30" rx="2"/><rect x="118" y="164" width="16" height="30" rx="2"/><rect x="138" y="164" width="16" height="30" rx="2"/><rect x="158" y="164" width="16" height="30" rx="2"/>
+      <rect x="78" y="224" width="16" height="30" rx="2"/><rect x="98" y="224" width="16" height="30" rx="2"/><rect x="118" y="224" width="36" height="30" rx="2"/><rect x="158" y="224" width="16" height="30" rx="2"/>
+      <rect x="78" y="284" width="96" height="30" rx="2" stroke-opacity=".5"/>
+    </g>
+    <path d="M86 172 V180 M106 172 V180 M126 172 V180 M146 172 V180 M166 172 V180 M86 232 V240 M106 232 V240 M166 232 V240" stroke-width="3"/>
+    
+    <rect x="262" y="318" width="44" height="34" rx="4"/>
+    <path d="M271 328 h10 v10 h-10z M287 328 h10 v10 h-10z" stroke-width="1.5"/>
+    
+    <path d="M276 44 v6 a26 12 0 0 0 52 0 v-6"/>
+    <path d="M286 62 h32" stroke-opacity=".5" stroke-width="1.5"/>
+    
+    <rect x="430" y="196" width="86" height="200"/>
+    <path d="M500 296 h8" stroke-width="3"/>
+    <rect x="398" y="262" width="20" height="36" rx="3"/>
+    <path d="M403 286 h10" stroke-opacity=".5" stroke-width="1.5"/>
+    
+    <path d="M520 110 h12 M526 110 v-6"/>
+    <path d="M520 104 v14 l-22 10"/>
+    <path d="M462 124 l38 -12 l8 22 l-38 12 z"/>
+  </g>
+  
+  <g stroke="#e8a317" stroke-width="2.5">
+    <path d="M100 150 V120 Q100 104 116 104 H520"/>
+    <path d="M140 150 V112 Q140 98 154 98 H302 V44" stroke-dasharray="1 0"/>
+    <path d="M160 150 V128 Q160 116 172 116 H284 V318" stroke-dasharray="6 6"/>
+    <path d="M408 104 V262" stroke-dasharray="6 6"/>
+    <path d="M520 104 V96" />
+  </g>
+  <g fill="#e8a317" stroke="none">
+    <circle cx="302" cy="58" r="3.5"/>
+    <circle cx="408" cy="272" r="3"/>
+    <circle cx="471" cy="135" r="4"/>
+    <circle cx="179" cy="306" r="2.5"/>
+  </g>
+</svg>

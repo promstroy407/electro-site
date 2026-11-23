@@ -1,0 +1,2 @@
+{{-- Иконка направления, нарисована для сайта. Цвет линий — currentColor, акцент — янтарный. --}}
+<svg {{ $attributes->merge(["class" => "h-12 w-12"]) }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="17"/><path d="M26 10l-9 16h8l-3 12 10-17h-8z" stroke="#e8a317"/></svg>

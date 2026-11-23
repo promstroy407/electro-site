@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  gates:
+    name: Формат → статанализ → тесты
+    runs-on: ubuntu-latest
+
+    services:
+      pgsql:
+        image: postgres:17
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d testing"
+          --health-interval 3s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 3s
+          --health-retries 20
+
+    # Одноразовая БД контейнера CI: логин и пароль не секрет, живут минуты.
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USERNAME: ci
+      DB_PASSWORD: ci
+      REDIS_HOST: 127.0.0.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, intl, redis
+          coverage: none
+
+      - name: Кеш Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('composer.lock', 'composer.json') }}
+
+      - name: Зависимости
+        run: |
+          cp .env.example .env
+          composer install --no-interaction --prefer-dist --no-progress
+          php artisan key:generate --no-interaction
+
+      - name: Формат (Pint, только проверка)
+        run: composer format:check
+
+      - name: Статанализ (Larastan)
+        run: composer analyse
+
+      - name: Тесты (Pest)
+        run: composer test
+
+  deploy:
+    name: Боевой образ — сборка и пробный запуск
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Те же шаги, что deploy/update.sh на сервере. Домен localhost:
+      # Caddy выдаёт себе внутренний сертификат и не ходит в Let's Encrypt.
+      - name: Сборка и запуск
+        run: |
+          SITE_DOMAIN=localhost ACME_EMAIL=ci@example.test deploy/make-env.sh
+          C="docker compose --env-file .env -f deploy/compose.yaml"
+          $C build
+          $C up -d pgsql redis
+          $C run --rm app php artisan migrate --force
+          $C run --rm app php artisan db:seed --class='Database\Seeders\ContentSeeder' --force
+          # Выдуманные партнёры — чтобы на скриншотах были видны /partnery и блок на главной.
+          $C run --rm app php artisan db:seed --class='Database\Seeders\DemoPartnerSeeder' --force
+          $C up -d
+
+      - name: Страницы отвечают
+        run: |
+          C="docker compose --env-file .env -f deploy/compose.yaml"
+          get() { $C exec -T web wget -qO- "http://127.0.0.1:8080$1"; }
+          for _ in $(seq 1 30); do get /up >/dev/null 2>&1 && break; sleep 2; done
+          get /up >/dev/null
+          get / | grep -q '/build/assets/'
+          get /uslugi >/dev/null
+          get /admin/login | grep -q 'filament'
+          asset="$(get / | grep -o '/build/assets/[^"]*\.css' | head -1)"
+          get "$asset" >/dev/null
+          $C exec -T app php artisan admin:create ci@example.test | grep -q 'Пароль:'
+
+      - name: Перезапуск PHP без ошибки 502
+        run: |
+          C="docker compose --env-file .env -f deploy/compose.yaml"
+          $C restart app &
+          for _ in $(seq 1 20); do
+            code=$($C exec -T web wget -qO /dev/null -S http://127.0.0.1:8080/up 2>&1 | grep -o 'HTTP/[0-9.]* [0-9]*' | tail -1 | grep -o '[0-9]*$' || echo ERR)
+            echo "ответ: $code"
+            [ "$code" = "502" ] && { echo "Сайт отдал 502 во время перезапуска"; exit 1; }
+            sleep 0.5
+          done
+          wait
+
+      - name: Скриншоты страниц
+        run: |
+          # Браузер — из готового образа Playwright: сам раннер может быть
+          # новее, чем Playwright поддерживает.
+          docker run --rm --network host -v "$PWD:/w" -w /w mcr.microsoft.com/playwright:v1.55.0-noble \
+            sh -c 'npm install --no-save --no-audit --no-fund playwright@1.55.0 && node .github/screenshots.mjs'
+
+      - name: Скриншоты в журнал (base64)
+        run: for f in screenshots/jpg/*.jpg; do echo "==SHOT $(basename "$f")"; base64 -w0 "$f"; echo; done
+
+      - name: Журнал контейнеров при сбое
+        if: failure()
+        run: docker compose --env-file .env -f deploy/compose.yaml logs --no-color

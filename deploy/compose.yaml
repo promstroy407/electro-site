@@ -1,0 +1,95 @@
+# Боевой сервер. Запуск и обновление — deploy/update.sh, первый раз —
+# deploy/install.sh. Все секреты — в .env в корне репозитория на сервере
+# (его создаёт install.sh), в git их нет.
+name: es12
+
+x-app: &app
+    image: es12-app
+    env_file: ../.env
+    restart: unless-stopped
+    volumes:
+        - storage:/var/www/html/storage
+    networks:
+        - internal
+    depends_on:
+        pgsql:
+            condition: service_healthy
+        redis:
+            condition: service_healthy
+
+services:
+    app:
+        <<: *app
+        build:
+            context: ..
+            dockerfile: deploy/Dockerfile
+            target: app
+
+    # Воркер очереди: отправка уведомлений о заявках, одна попытка.
+    queue:
+        <<: *app
+        pull_policy: never
+        command: ['php', 'artisan', 'queue:work', '--tries=1', '--timeout=60', '--max-time=3600']
+
+    web:
+        image: es12-web
+        build:
+            context: ..
+            dockerfile: deploy/Dockerfile
+            target: web
+        restart: unless-stopped
+        ports:
+            - '80:80'
+            - '443:443'
+            - '443:443/udp'
+        environment:
+            SITE_DOMAIN: '${SITE_DOMAIN:?Задайте SITE_DOMAIN в .env}'
+            ACME_EMAIL: '${ACME_EMAIL:?Задайте ACME_EMAIL в .env}'
+        volumes:
+            - storage:/var/www/html/storage:ro
+            - caddy-data:/data
+            - caddy-config:/config
+        networks:
+            - internal
+        depends_on:
+            - app
+
+    pgsql:
+        image: postgres:17
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: '${DB_DATABASE:?Задайте DB_DATABASE в .env}'
+            POSTGRES_USER: '${DB_USERNAME:?Задайте DB_USERNAME в .env}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD:?Задайте DB_PASSWORD в .env}'
+        volumes:
+            - pgsql:/var/lib/postgresql/data
+        networks:
+            - internal
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -q -d "$$POSTGRES_DB" -U "$$POSTGRES_USER"']
+            interval: 5s
+            retries: 20
+            timeout: 5s
+
+    redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        volumes:
+            - redis:/data
+        networks:
+            - internal
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            retries: 20
+            timeout: 5s
+
+networks:
+    internal:
+
+volumes:
+    storage:
+    pgsql:
+    redis:
+    caddy-data:
+    caddy-config:

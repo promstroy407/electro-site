@@ -1,0 +1,18 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # Строгий уровень с первого дня: на десяти файлах это бесплатно,
+    # на тысяче — месяц работы, который никто не выделит.
+    level: 8
+
+    paths:
+        - app
+        - config
+        - database
+        - routes
+
+    tmpDir: .phpstan-cache
+
+    checkMissingCallableSignature: true
+    treatPhpDocTypesAsCertain: false

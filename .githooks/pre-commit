@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Гейты перед коммитом: формат → статанализ → тесты, стоп на первом провале.
+# Подключается через `git config core.hooksPath .githooks` (это делает bin/setup).
+# Формат здесь только проверяется: чтобы поправить, запустите `sail composer format`.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+if [ -x ./vendor/bin/sail ] && ./vendor/bin/sail ps --status running 2>/dev/null | grep -q laravel.test; then
+    ./vendor/bin/sail composer check:ci
+else
+    echo "Контейнеры не запущены: поднимите их командой ./vendor/bin/sail up -d" >&2
+    exit 1
+fi
