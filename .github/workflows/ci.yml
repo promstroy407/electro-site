@@ -81,6 +81,8 @@ jobs:
       - name: Сборка и запуск
         run: |
           SITE_DOMAIN=localhost ACME_EMAIL=ci@example.test deploy/make-env.sh
+          # Выдуманные реквизиты — чтобы на скриншотах был виден подвал с ИП.
+          printf 'SITE_LEGAL_NAME="ИП Иванов Иван Иванович"\nSITE_INN=123456789012\nSITE_OGRNIP=312345678901234\n' >> .env
           C="docker compose --env-file .env -f deploy/compose.yaml"
           $C build
           $C up -d pgsql redis

@@ -12,7 +12,7 @@
 
             <h2>1. Кто обрабатывает данные</h2>
             <p>
-                Оператор персональных данных — {{ $site->companyName }}{{ $site->address !== '' ? ', '.$site->address : '' }}.
+                Оператор персональных данных — {{ $site->requisites() !== '' ? $site->requisites().' ('.$site->companyName.')' : $site->companyName }}, {{ $site->city }}{{ $site->address !== '' ? ', '.$site->address : '' }}.
                 Вопросы об обработке данных можно направить
                 @if ($site->email !== '')
                     на почту <a href="mailto:{{ $site->email }}">{{ $site->email }}</a>.
