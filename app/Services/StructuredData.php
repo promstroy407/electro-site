@@ -36,6 +36,8 @@ final readonly class StructuredData
             '@type' => 'Electrician',
             '@id' => $this->organizationId(),
             'name' => $this->site->companyName,
+            'legalName' => $this->site->legalName,
+            'taxID' => $this->site->inn,
             'description' => 'Электромонтаж и слаботочные системы под ключ: электрика до 10 кВ, пожарная и охранная сигнализация, видеонаблюдение, СКУД, СКС.',
             'url' => $home,
             'logo' => $this->url->asset('img/logo-mark.png'),

@@ -23,6 +23,9 @@ final readonly class SiteInfo
         public string $maxChannel = '',
         public string $vk = '',
         public string $metrikaId = '',
+        public string $legalName = '',
+        public string $inn = '',
+        public string $ogrnip = '',
     ) {}
 
     /**
@@ -43,6 +46,9 @@ final readonly class SiteInfo
             maxChannel: self::urlStartingWith(self::string($config, 'max_channel'), 'https://max.ru/'),
             vk: self::urlStartingWith(self::string($config, 'vk'), 'https://vk.ru/', 'https://vk.com/'),
             metrikaId: self::digits(self::string($config, 'metrika_id')),
+            legalName: self::string($config, 'legal_name'),
+            inn: self::exactDigits(self::string($config, 'inn'), 10, 12),
+            ogrnip: self::exactDigits(self::string($config, 'ogrnip'), 13, 15),
         );
     }
 
@@ -66,6 +72,37 @@ final readonly class SiteInfo
     public function phoneHref(): string
     {
         return (string) preg_replace('/(?!^\+)[^\d]/', '', $this->phone);
+    }
+
+    /**
+     * Реквизиты продавца для подвала и политики: «ИП …, ИНН …, ОГРНИП …».
+     * Пусто, пока в .env не задано название (SITE_LEGAL_NAME).
+     */
+    public function requisites(): string
+    {
+        if ($this->legalName === '') {
+            return '';
+        }
+
+        $parts = [$this->legalName];
+
+        if ($this->inn !== '') {
+            $parts[] = 'ИНН '.$this->inn;
+        }
+
+        if ($this->ogrnip !== '') {
+            $parts[] = (strlen($this->ogrnip) === 15 ? 'ОГРНИП ' : 'ОГРН ').$this->ogrnip;
+        }
+
+        return implode(', ', $parts);
+    }
+
+    /** ИНН и ОГРН(ИП) — строго цифры нужной длины, иначе не показываем. */
+    private static function exactDigits(string $value, int ...$lengths): string
+    {
+        $value = trim($value);
+
+        return preg_match('/^\d+$/', $value) === 1 && in_array(strlen($value), $lengths, true) ? $value : '';
     }
 
     /** Номер счётчика вставляется в скрипт — пропускаем только цифры. */

@@ -124,6 +124,9 @@
             </div>
             <div class="footer__bottom">
                 <span>© {{ now()->year }} {{ $site->companyName }}</span>
+                @if ($site->requisites() !== '')
+                    <span class="footer__requisites">{{ $site->requisites() }}</span>
+                @endif
                 <a href="{{ route('privacy') }}">Политика конфиденциальности</a>
             </div>
         </div>
