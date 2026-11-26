@@ -34,3 +34,8 @@ it('перечисляет в карте сайта разделы, опубли
 it('кладёт файл подтверждения прав для Яндекс Вебмастера', function (): void {
     expect(file_get_contents(public_path('yandex_55b781fe79bf44fc.html')))->toContain('Verification: 55b781fe79bf44fc');
 });
+
+it('кладёт файл подтверждения прав на сайт для справочника ЖСправ', function (): void {
+    expect(file_get_contents(public_path('9d741e8e3a8b24885b96687c2f77a48b0e51d3d0.html')))
+        ->toContain('800cf3c3b51667db820cf9b0dfbaa9175644c823');
+});
